@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:vm="http://www.mulesoft.org/schema/mule/vm" xmlns:cluster="http://www.mulesoft.org/schema/mule/ee/cluster"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:jms="http://www.mulesoft.org/schema/mule/jms" xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd">
+	
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="2e6df9ab-bd6e-40be-afb6-ce8de8bc84d9" basePath="${api.basepath}" >
+		<http:request-connection host="${api.url}" port="${api.port}" />
+	</http:request-config>
+	<configuration-properties doc:name="Configuration properties" doc:id="332fd807-956a-4ae9-b91f-009305b0f0be" file="config.yaml" />
+	<file:config name="File_Config" doc:name="File Config" doc:id="7021561e-a56e-4f9e-96a6-c0814911f286" >
+		<file:connection workingDir="C:\Users\gasto\OneDrive\Escritorio\PruebaFiles" />
+	</file:config>
+	<configuration doc:name="Configuration" doc:id="67b246a7-fc2d-4b5a-b8cd-2d3b1ff9a5cb" defaultErrorHandler-ref="globalError_Handler" >
+	</configuration>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="f5c25da7-2f2f-4723-b5bd-f6d8f1f6f8dd" >
+		<db:my-sql-connection host="${db.host}" port="${db.port}" user="${db.user}" password="${db.pass}" database="${db.name}" />
+	</db:config>
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="bb738b25-624e-4dda-8bf4-8ad31a8ea968">
+		<http:listener-connection host="0.0.0.0" port="8082" />
+	</http:listener-config>
+	<global-property doc:name="Global Property" doc:id="d04ff2e9-f6bf-416f-b725-72ae43cd46fe" name="MULE_ENCODING" value="UTF-8" />
+	<jms:config name="JMS_Config" doc:name="JMS Config" doc:id="f7380e04-a010-4f5c-a053-0ad2ddaef579" >
+		<jms:active-mq-connection >
+			<jms:factory-configuration />
+		</jms:active-mq-connection>
+	</jms:config>
+	<db:config name="Database_ConfigSakila" doc:name="Database Config" doc:id="733f882d-98ce-4a31-8231-1863db0c69b1" >
+		<db:my-sql-connection host="${db.host}" port="${db.port}" user="${db.user}" password="${db.pass}" database="${db.name2}"/>
+	</db:config>
+	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="d9acc1c8-7e14-4274-9290-b8a7dfac45b8" >
+		<salesforce:basic-connection username="${sf.user}" password="Danubio3122098" securityToken="${sf.token}" url="https://login.salesforce.com/services/Soap/u/47.0" />
+	</salesforce:sfdc-config>
+	<vm:config name="VM_Config" doc:name="VM Config" doc:id="a5b6ada2-667e-4e7c-b8b7-5dc702abaa19" >
+		<vm:queues >
+			<vm:queue queueName="example" />
+		</vm:queues>
+	</vm:config>
+	<error-handler name="globalError_Handler" doc:id="6ab57d87-3a03-4e08-9be8-80a4757b25e5" >
+		<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="8628c540-989b-4a46-9759-7277073d6b1c" type="ANY">
+			<ee:transform doc:name="Transform Message" doc:id="cf1e7bb1-25e9-4e0e-a03f-e38418a2b6be" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{error: "Something went wrong in the API"}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+		</on-error-continue>
+	</error-handler>
+</mule>

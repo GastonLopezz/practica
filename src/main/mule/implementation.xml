@@ -1,0 +1,959 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:jms="http://www.mulesoft.org/schema/mule/jms" xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:vm="http://www.mulesoft.org/schema/mule/vm" xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+	<flow name="get_facultad" doc:id="103d6b57-e072-4317-8339-75bdaf56f183" >
+		<try doc:name="Try" doc:id="863f7273-69ba-470d-b197-58c33f63d155" >
+			<http:request method="GET" doc:name="GET facultad" doc:id="d06bc820-3d45-4282-bb0c-49c5aa59a931" config-ref="HTTP_Request_configuration" path="/facultad">
+		</http:request>
+			<set-variable value="#[payload]" doc:name="university" doc:id="b9189171-38f9-4ca4-836c-fb359294a91f" variableName="university" />
+			<ee:transform doc:name="Transform Message" doc:id="ee29bbce-0a85-41d2-8899-02197ec882e8">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+var facultad = vars.university filter($.nombre==vars.idFacultad)
+---
+if(facultad[0] != null)
+	{ 
+		nombre: upper(facultad[0].nombre as String),
+		url: facultad[0].url,
+		direccion: facultad[0].direccion
+	}
+else
+	{}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="dec0f8bf-9aab-444d-9358-372dc2425d80" >
+					<ee:transform doc:name="Transform Message" doc:id="fdf899e9-31a2-4e73-b6d8-a31a4012186f" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+"Error getting the info"]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</on-error-continue>
+			</error-handler>
+		</try>
+		<logger level="INFO" doc:name="Logger" doc:id="9a43f338-d4e8-49ab-8d74-44c9223c06ba" message="#[payload]"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="f1cab553-0f02-405d-bd97-77775be5a4f6" type="ANY">
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="post_facultad" doc:id="e9594141-0ca7-4ca7-9f45-f9544c60dc90" >
+		<http:request method="POST" doc:name="POST facultad" doc:id="3d12631b-5eb2-4314-9bf7-cfab58342f46" config-ref="HTTP_Request_configuration" path="/facultad">
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	"url" : payload.'url',
+	"direccion" : payload.'direccion',
+	"nombre" : payload.'nombre'
+}]]]></http:query-params>
+		</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="2e67e923-c1dc-4c0a-b328-1f3362960efe" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	result: payload
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="post_usuario" doc:id="08ef1464-1185-49da-8a0f-cc95092df8e8" >
+		<http:request method="POST" doc:name="POST usuario" doc:id="b63db235-ee5f-4875-a47c-49006f44336f" config-ref="HTTP_Request_configuration" path="/usuario">
+			<http:body ><![CDATA[#[vars.requestBody]]]></http:body>
+		</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="d8ae6d20-821d-4f13-88b8-c1d6833d090f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	result: payload
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="get_usuario" doc:id="dc1e5d1b-07a6-44a6-82c5-fae3743f45f9" >
+		<http:request method="GET" doc:name="GET usuario" doc:id="66c5f2ee-fe95-4018-a529-8e5e9260b276" config-ref="HTTP_Request_configuration" path="/usuario"/>
+		<ee:transform doc:name="Transform Message" doc:id="0b9327f8-b817-4c62-a871-1c1628aa053f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+var usuario = payload filter(($.ci as String) == vars.ci)
+fun getFullName (names: Object) = do {
+	var fullname = names.name ++ ' ' ++ names.surname
+	---
+	fullname
+}
+---
+if(usuario[0] != null)
+	usuario @(ci: usuario[0].ci): { 
+		nombre: usuario[0].nombre,
+		fullname: getFullName ({name: usuario[0].nombre, surname: usuario[0].apellido}),
+		apellido: usuario[0].apellido,
+		email: usuario[0].email
+	}
+else
+	{message: "No entities"}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="get_curso" doc:id="60e53816-7217-41ca-b362-0319b0814844" >
+		<http:request method="GET" doc:name="GET curso" doc:id="eeaee0fb-8316-46e4-a236-aa030d5093dd" config-ref="HTTP_Request_configuration" path="/curso" >
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	"idFacultad" : vars.idFacultad
+}]]]></http:query-params>
+		</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="4be14fcb-df66-47f5-b6d2-c3f6dc27edad" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="result" ><![CDATA[%dw 2.0
+output application/json
+var curso = payload filter($.nombre==vars.idCurso)
+---
+if(curso[0] != null)
+	{ 
+		informacion: curso[0].informacion
+	}
+else
+	{message: "No entities"}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<validation:is-not-blank-string doc:name="Is not blank string" doc:id="7e0e098e-e85b-409a-9353-df193fb4aee6" value="#[vars.result.informacion]" message="Informacion es null" />
+		<ee:transform doc:name="Transform Message" doc:id="d35449d4-c898-4a45-9bd9-04ec0931f232" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var curso = payload filter($.nombre==vars.idCurso)
+---
+if(curso[0] != null)
+	{ 
+		nombre: curso[0].nombre,
+		claveMatriculacion: curso[0].claveMatriculacion,
+		informacion: curso[0].informacion,
+		fechaLimiteInscripcion: curso[0].fechaLimiteInscripcion,
+		calificacionAprovacion: curso[0].calificacionAprovacion
+	}
+else
+	{message: "No entities"}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="a65990a3-146d-42bf-b683-ddf4799c1c97">
+				<set-payload value="Informacion is blank" doc:name="Set Payload" doc:id="8ec30196-3076-4298-a8a1-17cfe8a85958" />
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="post_curso" doc:id="0c08fb37-774d-413d-9dd6-673d611db721" >
+		<http:request method="POST" doc:name="POST curso" doc:id="5b07e1d6-4587-4530-a088-100324cb6749" config-ref="HTTP_Request_configuration" path="/curso">
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	"idFacultad" : vars.idFacultad
+}]]]></http:query-params>
+		</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="a8d51529-f00e-4b8b-b67c-bfafc3bfbbf8" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	result: payload
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="sync_all" doc:id="21a35ea5-c444-40be-9ec7-2574fca44c83" >
+		<scatter-gather doc:name="Scatter-Gather" doc:id="d4b48afd-dc71-4b56-8604-c229f3b4a9da" >
+			<route >
+				<flow-ref doc:name="SYNC facultad all" doc:id="663a0c79-4933-47f1-811e-654e2c003da2" name="sync_facultad"/>
+				<logger level="INFO" doc:name="payload" doc:id="ea611746-c3ec-4ed0-8548-6938b7b2e01b" message="#[payload]" />
+			</route>
+			<route >
+				<flow-ref doc:name="SYNC curso" doc:id="9c8a0136-3776-435b-b3cf-323feaf50239" name="sync_curso"/>
+			</route>
+			<route >
+				<flow-ref doc:name="SYNC usuario" doc:id="4c0273ec-503b-4141-84aa-3abe630c6abb" name="sync_usuario"/>
+			</route>
+		</scatter-gather>
+		<ee:transform doc:name="Transform Message" doc:id="2b4b7eb3-4d24-47ba-a672-7e70168c3c5f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+flatten(payload..payload)]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="83e1b4f5-3f35-4082-a0a7-f6a4d02f86f1" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/csv header=false
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<file:write doc:name="Write" doc:id="6a41073c-4c84-4c45-ad5b-dc1256d40912" path="C:\Users\gasto\OneDrive\Escritorio\PruebaFiles\Prueba.csv"/>
+	</flow>
+	<flow name="sync_facultad" doc:id="6246b215-bebe-4995-b682-e750ff48634f" >
+		<http:request method="GET" doc:name="GET facultad all" doc:id="a150341f-e7be-49b0-84c2-998444f42c93" config-ref="HTTP_Request_configuration" path="/facultad" />
+		<ee:transform doc:name="Transform Message" doc:id="8daca745-2b55-48fa-bb44-d46500d51d0f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/csv
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<file:write doc:name="Write" doc:id="823e9069-ab0f-4c9e-9b47-381224037e5a" path="C:\Users\gasto\OneDrive\Escritorio\PruebaFiles\PruebaFacultad.csv" />
+	</flow>
+	<flow name="sync_curso" doc:id="650b491e-2eb3-4658-a17b-8d6bce335f1f">
+		<http:request method="GET" doc:name="GET facultad all" doc:id="fc643c0e-6923-479e-9621-a51eb3ba3fbd" config-ref="HTTP_Request_configuration" path="/facultad" />
+		<set-variable value="#[[]]" doc:name="Array" doc:id="f1c05b02-a96f-4d20-a2ed-22ec7ebccd21" variableName="Array"/>
+		<foreach doc:name="For Each" doc:id="b7351fd2-5008-4f8a-98cd-1c86b3703331" >
+			<set-variable value="#[payload.nombre]" doc:name="Facultad" doc:id="5e28a481-e120-4f35-8c2b-3bdb3cafd3c9" variableName="Facultad" />
+			<http:request method="GET" doc:name="GET cursos all" doc:id="0c74ea5a-062a-4043-af53-6f2283ffa2ea" config-ref="HTTP_Request_configuration" path="/curso">
+			<http:query-params><![CDATA[#[output application/java
+---
+{
+	"idFacultad" : vars.Facultad
+}]]]></http:query-params>
+		</http:request>
+			<ee:transform doc:name="Transform Message" doc:id="949b5fd9-c1a8-4964-9d53-1b8ea92bb836" >
+				<ee:message >
+				</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="Array" ><![CDATA[%dw 2.0
+output application/java
+---
+vars.Array ++ payload]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+		</foreach>
+		<ee:transform doc:name="Transform Message" doc:id="cfb069f4-d444-4615-a4b4-bfb63f23c319">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/csv
+---
+vars.Array]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<file:write doc:name="Write" doc:id="18918511-2de6-4618-932d-2962827ffc57" path="C:\Users\gasto\OneDrive\Escritorio\PruebaFiles\PruebaCurso.csv" />
+	</flow>
+	<flow name="sync_usuario" doc:id="04f9eae6-6f47-46e2-90ae-a36857c09f33">
+		<http:request method="GET" doc:name="GET usuarios all" doc:id="a6ad7661-0ffb-499b-b5f3-d156ae2b57e9" config-ref="HTTP_Request_configuration" path="/usuario">
+		</http:request>
+		<ee:transform doc:name="Message" doc:id="685a642b-bafa-4dab-91e9-077317bb89cd">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/csv
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<file:write doc:name="Copy_of_Write" doc:id="4ce9b93d-a0a7-4798-9f93-a60e40958b02" path="C:\Users\gasto\OneDrive\Escritorio\PruebaFiles\PruebaUsuario.csv" />
+	</flow>
+	<flow name="read_facultad" doc:id="215d6c62-79f8-4d72-bcf3-e110ee52a921" >
+		<http:listener doc:name="Listener" doc:id="344964d3-31f9-4b7c-9a5f-c2db7e0a7418" config-ref="practica-httpListenerConfig" path="/api/read/facultad"/>
+		<file:read doc:name="Read" doc:id="207cf478-6ef1-4112-ab3a-a1265389d3d6" config-ref="File_Config" path="C:\Users\gasto\OneDrive\Escritorio\PruebaFiles\PruebaFacultad.csv"/>
+		<ee:transform doc:name="Transform Message" doc:id="82ec2188-73c7-49c5-8b47-648c2a745935">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="2ad84810-3075-407b-9a2d-72c43a03fe3c" message="#[payload]"/>
+	</flow>
+	<flow name="read_curso" doc:id="53c5403e-07e2-4e92-8dca-9a5b8b57de23" >
+		<http:listener doc:name="Copy_of_Listener" doc:id="56b9a992-dff5-4fde-9153-a6de567ad67b" config-ref="practica-httpListenerConfig" path="/api/read/curso" />
+		<file:read doc:name="Read" doc:id="84f3959a-561b-4a03-b6af-cad479db1b9e" config-ref="File_Config" path="C:\Users\gasto\OneDrive\Escritorio\PruebaFiles\PruebaCurso.csv" />
+		<ee:transform doc:name="Transform Message" doc:id="6d80ba75-e0ae-4142-816d-6a8bbb8f9b12" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="0185c0ee-43ca-4f2b-b863-fbcb0cdea22e" message="#[payload]" />
+	</flow>
+	<flow name="read_usuario" doc:id="32198083-9438-4188-9f8d-470ce80b8015" >
+		<http:listener doc:name="Listener" doc:id="a6214f46-f72d-443a-a1b8-91366481918f" config-ref="practica-httpListenerConfig" path="/api/read/usuario" />
+		<file:read doc:name="Read" doc:id="0db652e8-9e23-41f4-97e6-026348eb5e8a" config-ref="File_Config" path="C:\Users\gasto\OneDrive\Escritorio\PruebaFiles\PruebaUsuario.csv" />
+		<ee:transform doc:name="Transform Message" doc:id="3f7d49e9-30c5-4b39-a3c1-4f05ef563a06">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="fe4b852f-4d54-4920-b758-a087ff48aad5" message="#[payload]" />
+		<ee:transform doc:name="Transform Message" doc:id="3475dd92-ba41-4d58-8e65-f84b717474d3" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+typeOf(payload)]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="assessment_dbsync" doc:id="986cefbb-3528-464e-92e6-8da6f9b6c0e0" >
+		<db:listener doc:name="On Table Row" doc:id="e09c6279-1b35-4c82-869a-3c76418b77e7" config-ref="Database_Config" table="assessment" watermarkColumn="idAssessment" idColumn="idAssessment">
+			<scheduling-strategy >
+				<fixed-frequency frequency="20" timeUnit="SECONDS"/>
+			</scheduling-strategy>
+		</db:listener>
+		<ee:transform doc:name="Object to csv" doc:id="cbc88a3c-649a-4dfe-805d-7a3287b3ac41" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/csv header=false
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<file:write doc:name="Write Assessment" doc:id="6b05932a-6512-43cc-9015-d57f20df8e46" config-ref="File_Config" path="${dir.name}/PruebaAssessment.csv" mode="APPEND"/>
+		<logger level="INFO" doc:name="Logger" doc:id="328aeb49-5a40-42a3-93b7-7e6823a18ab7" message="#[payload]" />
+	</flow>
+	<flow name="qualification_dbsync" doc:id="44ef69c3-3950-4c6b-adb1-f5accb874cf4" >
+		<db:listener table="qualification" doc:name="On Table Row" doc:id="2cd37808-6bed-455e-b261-2d1fbf89eec3" config-ref="Database_Config" watermarkColumn="idqualification" idColumn="idqualification" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="20" timeUnit="SECONDS"/>
+			</scheduling-strategy>
+		</db:listener>
+		<ee:transform doc:name="Object to csv" doc:id="e4033104-3b94-4ffa-9e61-d256fe1765f2" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/csv header=false
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<file:write doc:name="Write Qualification" doc:id="0743d8c0-8687-4697-a16e-d60237f50c30" config-ref="File_Config" path="${dir.name}/PruebaQualification.csv" mode="APPEND" />
+		<logger level="INFO" doc:name="Logger" doc:id="bac6017e-ee9f-4ca2-956c-fd96229c8b70" message="#[payload]"/>
+	</flow>
+	<flow name="sync_inscripciones" doc:id="b9fc4e04-595c-4344-b669-379ded1c9d6e" >
+		<http:request method="GET" doc:name="GET usuarios all" doc:id="a304ebce-c85d-4acf-ab74-aab4bb4e1629" config-ref="HTTP_Request_configuration" path="/usuario">
+				<http:query-params><![CDATA[#[output application/java
+---
+{
+	"idFacultad" : vars.Facultad
+}]]]></http:query-params>
+			</http:request>
+		<set-variable value="#[[]]" doc:name="Array" doc:id="0a4701b4-d703-4663-b03f-2b2ae7a952df" variableName="Array" />
+		<foreach doc:name="For Each" doc:id="f16a112a-c28e-4dca-a177-e72f0226b1db" >
+			<set-variable value="#[payload.ci]" doc:name="Usuario" doc:id="35233e5c-7dd5-4974-83c5-0f0de4f82581" variableName="Usuario" />
+			<http:request method="GET" doc:name="GET inscripcion all" doc:id="a05c6d5a-af17-4a93-8128-4ec254a7d76f" config-ref="HTTP_Request_configuration" path="/inscripcion" >
+				<http:query-params ><![CDATA[#[output application/java
+---
+{
+	"ciUsuario" : vars.Usuario
+}]]]></http:query-params>
+			</http:request>
+			<ee:transform doc:name="Transform Message" doc:id="368b1330-eea1-44fc-94d7-8485cffe8d96" >
+				<ee:message />
+				<ee:variables >
+					<ee:set-variable variableName="Array" ><![CDATA[%dw 2.0
+output application/java
+---
+vars.Array ++ payload]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+		</foreach>
+		<ee:transform doc:name="Transform Message" doc:id="51971a82-e9d7-4e44-af20-925938fc8d75" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/csv
+---
+vars.Array]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<file:write doc:name="Write" doc:id="bf5852ab-5ead-407d-95dc-21779b9b100c" path="C:\Users\gasto\OneDrive\Escritorio\PruebaFiles\PruebaInscripciones.csv" />
+	</flow>
+	<flow name="insert_assessment" doc:id="d9bea08c-de37-4bee-8f85-daa0386b9cdb" >
+		<set-variable value="#[payload]" doc:name="something" doc:id="774b7d43-64a9-4933-9abd-c1f8d3005af9" variableName="something"/>
+		<set-variable value='#[false]' doc:name="ok" doc:id="f5494724-3de7-414b-b106-6b07d9cc3578" variableName="ok"/>
+		<set-variable value="#[[]]" doc:name="facultades" doc:id="3c7e410a-c736-4003-bd6c-bffd04c8f42d" variableName="facultades"/>
+		<http:request method="GET" doc:name="GET facultad all" doc:id="5549f0c7-7f1e-4934-8e03-79af051defea" config-ref="HTTP_Request_configuration" path="/facultad" >
+		</http:request>
+		<foreach doc:name="For Each" doc:id="dac0f20a-55ce-4a08-bebd-78c1fa255d12" collection="#[payload]">
+			<set-variable value="#[payload.nombre]" doc:name="facultad" doc:id="35592071-33b5-4091-9856-dc06982a9163" variableName="facultad" />
+			<http:request method="GET" doc:name="Request" doc:id="adcdaa06-be70-4b01-b64b-01ae0208218b" config-ref="HTTP_Request_configuration" path="/curso">
+						<http:query-params><![CDATA[#[output application/java
+---
+{
+	"idFacultad" : vars.facultad
+}]]]></http:query-params>
+					</http:request>
+			<foreach doc:name="For Each" doc:id="ca8d49d2-99e1-476c-ae34-e031cfe80050">
+				<choice doc:name="Choice" doc:id="11830d37-64db-4706-ac24-8a1fb5146913">
+							<when expression="#[payload.nombre==vars.something.CourseName]">
+						<ee:transform doc:name="Transform Message" doc:id="34715025-869c-418f-a1fc-4d883bdaa129" >
+							<ee:message >
+							</ee:message>
+							<ee:variables >
+								<ee:set-variable variableName="ok" ><![CDATA[%dw 2.0
+output application/java
+---
+true]]></ee:set-variable>
+							</ee:variables>
+						</ee:transform>
+							</when>
+						</choice>
+					</foreach>
+		</foreach>
+		<try doc:name="Try" doc:id="67b39233-69a3-48a1-a252-e8a06750a523" >
+			<validation:is-true doc:name="Is true" doc:id="33eee715-d1cc-43fd-a63d-0b0c18c26dda" message="#[&quot;Course doesn't exist&quot;]" expression="#[vars.ok]" />
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="a6b5ac10-f7c1-4fce-9977-88c8b9d09003" >
+					<ee:transform doc:name="Transform Message" doc:id="80bf5e74-22e8-426d-bd5b-fe404c6977ce" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+---
+{error: "this course doesn't exist"}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+		<db:insert doc:name="Insert assessment" doc:id="3ea28b36-f566-48e6-af04-5c3798d349dd" config-ref="Database_Config">
+			<db:sql ><![CDATA[INSERT INTO `pruebadb`.`assessment` (` Name`, `ApprovalQualification`, `CourseName`) VALUES ( :name, :appq, :course);]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{name: vars.something.Name, appq: vars.something.ApprovalQualification, course: vars.something.CourseName}]]]></db:input-parameters>
+		</db:insert>
+		<error-handler>
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="dd675573-201b-49bd-b39b-1fa949837616" type="VALIDATION:INVALID_BOOLEAN">
+				<ee:transform doc:name="Transform Message" doc:id="bf98780d-7b26-4db9-adda-5a42a25096cf" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{error: "this course doesn't exist"}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<flow name="insert_qualification" doc:id="40757c35-2e4e-479f-bfd5-d0f006a5936a" >
+		<set-variable value='#[payload]' doc:name="something" doc:id="26a5aadb-253c-4429-8da3-0b1773bcff63" variableName="something" />
+		<set-variable value="#[false]" doc:name="ok" doc:id="b4eeea40-38d1-4bb6-b8c5-c2e9a2af097b" variableName="ok" />
+		<set-variable value="#[[]]" doc:name="usuarios" doc:id="1c0ac39b-f1b3-49e4-814a-3e77d10f02cf" variableName="usuarios" />
+		<http:request method="GET" doc:name="usuario Request" doc:id="7c5fd8a6-6591-45bd-bf6a-acd27d7aef01" config-ref="HTTP_Request_configuration" path="/usuario">
+			</http:request>
+		<foreach doc:name="For Each" doc:id="701c8197-8de2-429f-9817-40439b6f987c" >
+			<choice doc:name="Choice" doc:id="ef96a367-854a-45d3-95c0-f966008d19c5">
+				<when expression="#[payload.ci==vars.something.UserCI]">
+					<ee:transform doc:name="Transform Message" doc:id="62f2f1a0-485a-4b4b-9428-8c547f1f5a98">
+						<ee:message />
+						<ee:variables>
+							<ee:set-variable variableName="ok"><![CDATA[%dw 2.0
+output application/java
+---
+true]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+				</when>
+				<when expression="#[payload != null]">
+					<ee:transform doc:name="Transform Message" doc:id="ce5c2e3e-2eff-47c7-94e6-faf42f69e385" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</when>
+				<when expression='#[payload != "Papaya"]'>
+					<ee:transform doc:name="Transform Message" doc:id="1cb5c167-4b6e-4d77-8538-629b21f2e3a4" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+"Papaya"]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</when>
+			</choice>
+		</foreach>
+		<validation:is-true doc:name="Is true" doc:id="0487977d-6bce-4f4f-9f39-e5ed3f127bd2" expression="#[vars.ok]" message="#[&quot;User doesn't exist&quot;]" />
+		<db:insert doc:name="Insert Qualification" doc:id="2f27159c-a6d3-4b9d-a735-50d23d89f3f2" config-ref="Database_Config">
+			<db:sql><![CDATA[INSERT INTO `pruebadb`.`qualification` (`Mark`, `UserCi`, `AssessmentId`) VALUES ( :mark, :ci, :ass);]]></db:sql>
+			<db:input-parameters><![CDATA[#[{mark: vars.something.Mark, ci: vars.something.UserCI, ass: vars.something.AssessmentId}]]]></db:input-parameters>
+		</db:insert>
+	</flow>
+	<flow name="sendJSONwithActorstoQueue" doc:id="66c0ea6b-b121-469a-bce2-7b2270dcc3d1" >
+		<db:listener table="actor" doc:name="On Table Row" doc:id="09a03a18-f59d-4939-8a38-3b8eb0c65144" config-ref="Database_ConfigSakila" watermarkColumn="actor_id" idColumn="actor_id">
+			<scheduling-strategy >
+				<fixed-frequency frequency="20" timeUnit="SECONDS"/>
+			</scheduling-strategy>
+		</db:listener>
+		<db:select doc:name="Select" doc:id="9c89be48-4720-4412-954b-2a74898ef0ec" config-ref="Database_Config">
+			<db:sql ><![CDATA[SELECT * FROM sakila.actor;]]></db:sql>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="49722bfe-c2ec-44bf-b416-5fc09cb08836" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<jms:publish doc:name="Publish" doc:id="58115942-ab8c-40a6-960c-a1f78ed95698" config-ref="JMS_Config" destination="sakilaQ">
+			<jms:message >
+				<jms:properties ><![CDATA[#[{"publisher":"actor"}]]]></jms:properties>
+			</jms:message>
+		</jms:publish>
+	</flow>
+	<flow name="receiveQUEUEandWriteCSV" doc:id="6bbcb399-c5d0-4f8b-9fb4-aff09a8803a6" >
+		<jms:listener doc:name="On New Message" doc:id="c2d1fd46-2f40-4392-b071-deb243039199" config-ref="JMS_Config" destination="sakilaQ">
+			<jms:consumer-type >
+				<jms:queue-consumer />
+			</jms:consumer-type>
+		</jms:listener>
+		<file:write doc:name="Write" doc:id="acb3340c-eb28-4573-b324-d586927536dc" path="${dir.name}/PruebaSakira.csv">
+			<file:content ><![CDATA[#[output application/csv --- payload]]]></file:content>
+		</file:write>
+		<ee:transform doc:name="Transform Message" doc:id="c20396d9-420c-464a-a6c8-2dc172149c99" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+typeOf(payload)]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="universitiesToSalesforce" doc:id="37656397-0a18-4d5b-b67a-e93a326ebca2" >
+		<scheduler doc:name="Scheduler" doc:id="cd712b21-3347-459e-9e7c-f611484c21be" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="1" timeUnit="MINUTES"/>
+			</scheduling-strategy>
+		</scheduler>
+		<http:request method="GET" doc:name="GET facultad all" doc:id="959ca821-7247-43ac-81df-3aa02ab7f766" config-ref="HTTP_Request_configuration" path="/facultad" />
+		<batch:job jobName="implementationBatch_Job" doc:id="a0479675-225d-4b09-9c4c-29cdd221a8d8" >
+			<batch:process-records >
+				<batch:step name="Batch_Step" doc:id="8b71897e-3c94-43e6-8353-ee5270c784c0" >
+					<salesforce:query doc:name="Query" doc:id="9be31dc5-9745-41ac-8ee6-d588aac398d8" config-ref="Salesforce_Config" target="exists" targetValue="#[sizeOf (payload as Array) &gt; 0]">
+						<salesforce:salesforce-query ><![CDATA[SELECT Name FROM Facultad__c
+WHERE Name = ':name']]></salesforce:salesforce-query>
+						<salesforce:parameters ><![CDATA[#[output application/java
+---
+{
+	"name" : payload.nombre
+}]]]></salesforce:parameters>
+						<salesforce:headers />
+					</salesforce:query>
+					<logger level="INFO" doc:name="Logger" doc:id="e7877557-6d9a-4603-898b-f20431778b6a" message="#[{payloooooad: payload}]"/>
+				</batch:step>
+				<batch:step name="Batch_Step1" doc:id="ea1a7ed7-9255-40e2-8e03-f3b31ea21644" acceptExpression="#[not vars.exists]">
+					<ee:transform doc:name="Transform Message" doc:id="b080966c-47c7-4c17-9a55-2ec2e38e16b0">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{
+	Name: payload.nombre,
+	Address__c: payload.direccion,
+	URL__c: payload.url
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+					<batch:aggregator doc:name="Batch Aggregator" doc:id="0c07da5a-bccc-4965-9363-ced889e37cf4" size="3">
+						<salesforce:create doc:name="Facultades" doc:id="6dd13ef3-3eb4-449f-aa12-0e88ff43f40a" config-ref="Salesforce_Config" type="Facultad__c" />
+					</batch:aggregator>
+				</batch:step>
+			</batch:process-records>
+			<batch:on-complete >
+				<ee:transform doc:name="Transform Message" doc:id="1fc6f6a1-765d-410c-938c-52c4ab63f5e5" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="f4bfffe0-ab3f-4a79-bd46-621f9b5ea0f7" message="#[payload]"/>
+			</batch:on-complete>
+		</batch:job>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="a441ae8a-2384-4b94-9185-68b86a12600f" type="SALESFORCE:CONNECTIVITY, SALESFORCE:INVALID_INPUT, SALESFORCE:INVALID_RESPONSE, SALESFORCE:LIMIT_EXCEEDED, SALESFORCE:MUTUAL_AUTHENTICATION_FAILED, SALESFORCE:NOT_FOUND, SALESFORCE:RETRY_EXHAUSTED, SALESFORCE:TIMEOUT" >
+				<ee:transform doc:name="Transform Message" doc:id="06d6086c-8c70-4bf6-b2f8-f49d3b754492" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	error: "Something went wrong with the input elements"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="example" doc:id="82a4f4bb-9158-4469-8eb9-9ce39d861805">
+		<set-variable value="#[1]" doc:name="counter to 1" doc:id="f70d2677-b7e3-4134-87e1-8961083f181c" variableName="counter" />
+		<set-payload value="#[[1,2,3]]" doc:name="to [1,2,3]" doc:id="19133bf9-52e1-418d-84a8-814cf20c7bbd" />
+		<batch:job jobName="implementationBatch_Job1" doc:id="bb0e47b0-c10d-4406-9b53-05542be510f1">
+			<batch:process-records>
+				<batch:step name="Batch_Step2" doc:id="9a0aa5d9-9dce-4ba6-8137-67cfcc18e43b">
+					<set-variable value="#[vars.counter +10]" doc:name="counter +10" doc:id="660eedd7-6d3d-4b63-a6f0-189dd03c2639" variableName="counter" />
+					<set-variable value="#[vars.counter]" doc:name="stepVar to 10" doc:id="686830fd-4b72-4d0b-b00b-4a8a4a943098" variableName="stepVar" />
+					<logger level="INFO" doc:name="Logger" doc:id="efe7635c-ae04-4c46-92b3-c4e70aae8d39" message="#[{counter: vars.counter, stepVar: vars.stepVar}]" />
+				</batch:step>
+			</batch:process-records>
+			<batch:on-complete>
+				<logger level="INFO" doc:name="Logger" doc:id="4af295d2-9629-407a-8d59-29ebaefaa77e" message="#[OnComplete: {counter: vars.counter, stepVar: vars.stepVar}]" />
+			</batch:on-complete>
+		</batch:job>
+		<ee:transform doc:name="Transform Message" doc:id="c452ce81-4869-4a2d-877b-a9ec881c0792">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	payload: payload,
+	counter: vars.counter,
+	stepVar: vars.stepVar
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+	</flow>
+	<flow name="implementationFlow1" doc:id="f02f4dfb-4ece-4cf4-a26b-adfeb5a30f36" >
+		<http:listener doc:name="Listener" doc:id="10d65a0b-1f16-41c6-ab39-8c7e05588c5a" config-ref="practica-httpListenerConfig" path="/exam" />
+		<flow-ref doc:name="Flow Reference" doc:id="fc8c442b-3b0c-47d7-a0c5-137a28c8d2cb" name="example" target="payload"/>
+		<ee:transform doc:name="Transform Message" doc:id="964da868-f5fe-4831-927c-7d7375a95c7d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+vars.payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="implementationFlow" doc:id="438b17fd-178f-4c41-8ac4-d24ac2b5d1c4" >
+		<http:listener doc:name="Listener" doc:id="91aa72fa-500b-4084-8c55-9d7785c72450" config-ref="practica-httpListenerConfig" path="/examples" />
+		<set-payload value="#[[1,2,3]]" doc:name="to [1,2,3]" doc:id="ad3e36dd-6a50-4021-9cd4-3717b0c95553" />
+		<batch:job jobName="batchexample" doc:id="1cfd1a97-ffbb-40a4-9c7a-b8c4655c1f1c" >
+			<batch:process-records >
+				<batch:step name="Batch_Step3" doc:id="e37ed163-20bf-421e-ba02-c2489e2288f9" >
+					<set-variable value="#[payload]" doc:name="stepVar to payload" doc:id="123d91e2-908b-4930-933a-e5adc7016650" variableName="stepVar"/>
+				</batch:step>
+				<batch:step name="Batch_Step4" doc:id="88cd7d6f-66a8-4df6-ab9d-88f49f9a856f" >
+					<set-variable value="#[vars.stepVar + 10]" doc:name="stepVar +10" doc:id="9df780c6-8a53-4446-8e4d-66788e16970f" variableName="stepVar"/>
+					<set-payload value="#[vars.stepVar]" doc:name="to stepVar" doc:id="73d663bf-e156-4e38-add2-44c93a18f93f" />
+					<logger level="INFO" doc:name="Logger" doc:id="d4de86b7-558d-4316-8ef4-b905db664fa7" message="#[{payload: payload,stepVar: vars.stepVar}]"/>
+				</batch:step>
+			</batch:process-records>
+			<batch:on-complete >
+				<logger level="INFO" doc:name="Logger" doc:id="84877c00-6646-4693-9af3-8e5496cea9dd" message="#[{payload: payload,stepVar: vars.stepVar}]"/>
+			</batch:on-complete>
+		</batch:job>
+		<ee:transform doc:name="Transform Message" doc:id="98ed433b-0536-4cb8-a633-df4e507cd5aa" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{payload: payload,stepVar: vars.stepVar}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="implementationFlow2" doc:id="ff7b0d36-d151-44e6-9965-dcee3641ef7b" >
+		<http:listener doc:name="Listener" doc:id="af9bdedd-75c9-47dc-b919-af71e88e1d01" config-ref="practica-httpListenerConfig" path="/filelist" />
+		<file:list doc:name="List" doc:id="73170461-c008-4547-95f3-ecd885338468" config-ref="File_Config" directoryPath="./"/>
+		<ee:transform doc:name="Transform Message" doc:id="dcc4a2f9-9be9-476a-8552-2c3ce544951d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="implementationFlow3" doc:id="7f5fcfea-1078-410d-85e9-45b197199e9f" >
+		<http:listener doc:name="Listener" doc:id="9cf8afdb-ab2e-42f1-9fbf-a3591642fe94" config-ref="practica-httpListenerConfig" path="/copyread" />
+		<ee:transform doc:name="Transform Message" doc:id="1c3075c0-2b2b-4f15-8b88-facb20c3185b" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="var" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	resultado: lookup("read_usuario",null)
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<set-payload value='#[vars."var"]' doc:name="Set Payload" doc:id="632d79ee-8dd3-42c7-97e0-1b4603c5861c" />
+		<flow-ref doc:name="Flow Reference" doc:id="5735a8f2-d408-40f2-b4b8-a8a3f28e1aa8" name="implementationFlow4"/>
+	</flow>
+	<flow name="implementationFlow4" doc:id="528159e2-447d-4a8d-9975-b6b09b6ce856" >
+		<validation:is-not-null doc:name="Is not null" doc:id="1dcabf05-cf88-44b7-9489-ee1e63deacc4" value="#[vars.something]" message='#["is null"]'>
+			<error-mapping sourceType="VALIDATION:NULL" targetType="ANTENA:NO_ESTOY_CAZANDO_ANTENA_CARNAL" />
+		</validation:is-not-null>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="6faccc4f-5171-4ea6-b689-7a41e0800a2d" type="ANTENA:NO_ESTOY_CAZANDO_ANTENA_CARNAL">
+				<ee:transform doc:name="Transform Message" doc:id="7ae63346-8934-410d-a4fe-14c0465af8db" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	error: error.errorType.identifier
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-continue>
+		</error-handler>
+
+	</flow>
+	<flow name="Copy_of_implementationFlow" doc:id="d56a279d-7bfd-4e13-87b3-b7269f8a27cb" >
+		<http:listener doc:name="Listener" doc:id="a3502d22-1d24-40ff-8336-8c9a808d0b33" config-ref="practica-httpListenerConfig" path="/exampless" />
+		<set-payload value="#[[1,2,3]]" doc:name="Copy_of_to [1,2,3]" doc:id="c85173d5-1dc6-4a76-b963-de5b0b5a1a3e" />
+		<batch:job jobName="Copy_of_batchexample" doc:id="d89a78d6-c073-4125-8879-cb2f508f3553" >
+			<batch:process-records >
+				<batch:step name="Batch_Step2" doc:id="86a8cd1c-1645-4652-9e59-00f08d711b5e" >
+					<set-payload value='#["One" ++ payload as String]' doc:name="Set Payload" doc:id="ec946e40-7ca9-42d8-ba6a-42ed4e79e875" />
+				</batch:step>
+				<batch:step name="Copy_of_Batch_Step4" doc:id="f86d8827-4f0b-49ad-9c49-b6a49eeafe2e" >
+					<set-payload value='#["Two" ++ payload as String]' doc:name="Set Payload" doc:id="3f5f4db9-d778-45c4-ad4f-b5db2dc52f4f" />
+					<logger level="INFO" doc:name="Logger" doc:id="740313a3-443c-4f56-a012-4cf252212a84" message="#[{payload: payload}]" />
+				</batch:step>
+			</batch:process-records>
+			<batch:on-complete >
+				<logger level="INFO" doc:name="Logger" doc:id="00eadc57-e7d5-4123-9f26-ff408428a4ff" message="#[{payload: payload}]" />
+			</batch:on-complete>
+		</batch:job>
+		<ee:transform doc:name="Copy_of_Transform Message" doc:id="5d8387b9-025b-4599-8588-9d4e222d654c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{payload: payload}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="implementationFlow5" doc:id="a6ec6bab-75d2-4c77-b460-bb4d3fcfe31b" >
+		<vm:listener doc:name="VM_example" doc:id="cffcdf83-b173-4d35-bd9e-7cfc3b1e67c7" config-ref="VM_Config" queueName="example" timeout="300"/>
+		<ee:transform doc:name="Transform Message" doc:id="8b9f5c96-e771-4584-8958-c3928d513e3e" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+[{
+	id: 0,
+	example:"Example",
+	number: 2.6
+},
+{
+	id: 1,
+	example:"Revenclaw",
+	number: 3.8
+},
+{
+	id: 2,
+	example:"Twice",
+	number: 2.8
+},
+{
+	id: 3,
+	example:"Twist and shout",
+	number: 2.4
+}]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="a0b3afee-c5ad-46f7-9db6-f8e99be87c07" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var papaya = payload filter (value,index) -> (value.example contains ("Tw"))
+---
+{
+	ex: papaya.example.*number[?($ == 2.4)]
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="implementationFlow6" doc:id="2594321e-b9d1-40a3-994d-9b6b393552a7" >
+		<set-payload value='#["Hello"]' doc:name="Set Payload" doc:id="9c3b48b8-b294-4002-94b8-6ef079743de5" />
+		<vm:publish-consume queueName="example" doc:name="Publish consume" doc:id="a7efd7d2-e372-4662-b83b-ba2423ae3fb2" config-ref="VM_Config" timeout="300"/>
+		<ee:transform doc:name="Transform Message" doc:id="8aeb6660-2473-4b0b-b31a-40aa1dbb1eaa" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+	"alohaaa"]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="implementationFlow7" doc:id="ff1f640b-45ee-453b-acda-34f8109d57a9" >
+		<ee:transform doc:name="Transform Message" doc:id="07f884f0-92ea-495b-9ee5-889f440573a7" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+[
+	[1,"Campaña"],
+	[2,"Godin"],
+	[3,"Gimenez"],
+	[4,"Caceres"],
+	[6,"Oliveros"],
+	[5,"Torreira"],
+	[6,"Bentancur"],
+	[7,"Nandez"],
+	[8,"De la Cruz"],
+	[21, "Cavani"],
+	[11,"Nuñez"]
+]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="60f3a105-9992-45e2-91ed-7a00872e8ed1" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+unzip(payload)]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="b214d850-aa94-458c-b538-501abd8bd4dd" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload[0] zip payload[1]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="implementationFlow8" doc:id="bd237b30-c5ca-476a-9fbd-d071a76f3145" >
+		<salesforce:new-object-listener objectType="Facultad__c" doc:name="On New Object" doc:id="1f57fa1f-d79a-4a21-aa37-5af0882c58a9" config-ref="Salesforce_Config">
+			<scheduling-strategy >
+				<fixed-frequency frequency="20" timeUnit="SECONDS"/>
+			</scheduling-strategy>
+		</salesforce:new-object-listener>
+		<ee:transform doc:name="Transform Message" doc:id="ff6b4109-3ba4-41b2-97ea-a1494a790fd1" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	nombre: payload.Name,
+	url: payload.URL__c,
+	direccion: payload.Address__c
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference" doc:id="3d901233-14bb-4afa-b594-02ecbdce831b" name="post_facultad"/>
+	</flow>
+	<flow name="implementationFlow9" doc:id="d25230cb-8826-441c-900b-cc9bed88225f" >
+		<scheduler doc:name="Scheduler" doc:id="dd8cb2f7-c82a-4621-8596-70a878464b63" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="20" timeUnit="SECONDS"/>
+			</scheduling-strategy>
+		</scheduler>
+		<os:retrieve doc:name="Retrieve" doc:id="5bd387ad-d844-489e-ab1b-c97b6f804bec" key="lastActorId" target="lastActorId">
+			<os:default-value ><![CDATA[0]]></os:default-value>
+		</os:retrieve>
+		<db:select doc:name="Select" doc:id="1756575e-b2fa-46b1-a06b-e7f142bbea37" config-ref="Database_ConfigSakila">
+			<db:sql ><![CDATA[SELECT * FROM sakila.actor WHERE actor.last_name LIKE :segment AND actor.actor_id > :lastActorId;]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	segment: '%Lo%',
+	lastActorId: vars.lastActorId
+}]]]></db:input-parameters>
+		</db:select>
+		<choice doc:name="Choice" doc:id="58964a4c-de22-4164-9856-99b57f66798e" >
+			<when expression="#[not isEmpty(payload)]">
+				<os:store doc:name="lastActorId" doc:id="993eeaa4-1963-4a62-9a74-621904609eb8" key="lastActorId">
+			<os:value><![CDATA[#[max(payload..actor_id)]]]></os:value>
+		</os:store>
+				<file:write doc:name="Write" doc:id="5da6fc2b-0771-4190-bff2-3bb716cc43d1" config-ref="File_Config" path="${dir.name}/sakila2.csv">
+			<file:content><![CDATA[#[output application/csv --- payload]]]></file:content>
+		</file:write>
+				<ee:transform doc:name="Transform Message" doc:id="a09016d1-8a6c-4e80-b9b4-25b4146492fc" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="67c5893a-19d3-485b-9968-8a8f3e1e76cd" message="#[payload]"/>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="No records" doc:id="16d1ff95-6fd3-4896-b0fa-b202525ad660" message='#["NO NEW RECORDS"]'/>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="implementationFlow10" doc:id="c61c4124-bb6e-436e-ba65-80e2b6a38053" >
+		<ee:transform doc:name="Transform Message" doc:id="b2bc787e-24af-43c6-a5bc-5b7915b520d2" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	example1: "example",
+	example2: "example2",
+	example3: "example3"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="6e7d2285-d934-4430-8991-5325bf6b9d5d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload mapObject (value,key) -> {
+	(value): key
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="1b3afdff-84bd-4069-ada7-1f78f94a9c43" message="#[payload]"/>
+		<set-payload value="#[[0,1,2,3,4,5,6,7,8,9]]" doc:name="Set Payload" doc:id="62e88432-c51d-435b-9b99-18b2b1050de5" />
+		<batch:job jobName="implementationBatch_Job2" doc:id="02e96d6f-483e-4ac9-b1b1-48d07f27d7fa" >
+			<batch:process-records >
+				<batch:step name="Batch_Step5" doc:id="3c2c4a53-a78d-4845-a8ec-a95fcf4ada06" acceptExpression="#[(payload mod 2) == 0 ]">
+					<set-payload value="#[(payload * 10)]" doc:name="Set Payload" doc:id="29b957e0-0d9f-42cc-b1f8-353e0fe829f0" />
+					<batch:aggregator doc:name="Batch Aggregator" doc:id="38717c3e-04a8-4f82-9312-1bcb04119e82" size="2">
+						<logger level="INFO" doc:name="Logger" doc:id="adba71f0-25f0-4b52-a1e8-24156a66672d" message="#[payload]"/>
+					</batch:aggregator>
+				</batch:step>
+			</batch:process-records>
+			<batch:on-complete >
+				<logger level="INFO" doc:name="Logger" doc:id="fc9148e8-c0e5-4825-ba47-19a04438d34d" message="#[payload]"/>
+			</batch:on-complete>
+		</batch:job>
+	</flow>
+	<flow name="implementationFlow11" doc:id="158a246b-8e09-46fc-9053-44d1eafa437c" >
+		<http:listener doc:name="Listener" doc:id="3485c750-a44f-4c64-8fcb-5cb308d0a404" config-ref="practica-httpListenerConfig" path="/pepperoni"/>
+		<db:select doc:name="Select Actors" doc:id="ed7dd843-cf52-4ac7-8e72-93903792c9d8" config-ref="Database_ConfigSakila">
+			<db:sql ><![CDATA[SELECT * FROM sakila.actor;]]></db:sql>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="0e96cfc1-ca6b-4e8b-8964-01f08d064a49" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+typeOf(payload)]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>

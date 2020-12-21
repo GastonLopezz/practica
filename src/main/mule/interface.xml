@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:vm="http://www.mulesoft.org/schema/mule/vm" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd  http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd">
+    <http:listener-config name="practica-httpListenerConfig">
+        <http:listener-connection host="0.0.0.0" port="8081" />
+    </http:listener-config>
+    <apikit:config name="practica-config" api="resource::443f10c5-f512-44a0-bc1b-50a4c1b17244:practica:7.0.0:raml:zip:practica.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <flow name="practica-main">
+        <http:listener config-ref="practica-httpListenerConfig" path="/api/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="practica-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">405</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">406</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">415</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">501</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="15791ffd-d142-4d55-ab4f-b0ed89ef86f3" type="APIKIT:BAD_REQUEST">
+                <ee:transform doc:name="Transform Message" doc:id="0e6ed8a9-9905-44c2-96b8-32ded73342d5">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{failed: "Not enough attributes to consume this function" }]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+            </on-error-continue>
+        </error-handler>
+    </flow>
+    <flow name="practica-console">
+        <http:listener config-ref="practica-httpListenerConfig" path="/console/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="practica-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="put:\curso:application\json:practica-config">
+        <logger level="INFO" message="put:\curso:application\json:practica-config" />
+    </flow>
+    <flow name="put:\facultad:application\json:practica-config">
+        <logger level="INFO" message="put:\facultad:application\json:practica-config" />
+    </flow>
+    <flow name="put:\usuario:application\json:practica-config">
+        <logger level="INFO" message="put:\usuario:application\json:practica-config" />
+    </flow>
+    <flow name="delete:\curso:practica-config">
+        <logger level="INFO" message="delete:\curso:practica-config" />
+    </flow>
+    <flow name="delete:\facultad:practica-config">
+        <logger level="INFO" message="delete:\facultad:practica-config" />
+    </flow>
+    <flow name="delete:\usuario:practica-config">
+        <logger level="INFO" message="delete:\usuario:practica-config" />
+    </flow>
+    <flow name="delete:\usuario\(ci):practica-config">
+        <ee:transform>
+            <ee:variables>
+                <ee:set-variable variableName="ci">attributes.uriParams.'ci'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <logger level="INFO" message="delete:\usuario\(ci):practica-config" />
+    </flow>
+    <flow name="get:\curso:practica-config">
+        <set-variable value="#[attributes.queryParams.idFacultad]" doc:name="idFacultad" doc:id="b348a656-4969-45da-87ef-139785f03303" variableName="idFacultad" />
+        <set-variable value="#[attributes.queryParams.idCurso]" doc:name="idCurso" doc:id="2ee68ec7-ea41-4873-ae4d-20284ae9692d" variableName="idCurso" />
+        <flow-ref doc:name="Flow Reference" doc:id="808c4eb6-6fab-4b02-aa0f-b84649f67903" name="get_curso" />
+        <logger level="INFO" message="get:\curso:practica-config" />
+        <error-handler>
+            <on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="c5755121-feaf-4ae0-a9d3-7f9ae2581c52" type="HTTP:BAD_GATEWAY, HTTP:BAD_REQUEST, HTTP:CLIENT_SECURITY, HTTP:CONNECTIVITY">
+                <set-payload value="Gosta la papaya" doc:name="Set Payload" doc:id="09b07e39-3242-47f5-88db-d6b5a7413af1" />
+            </on-error-continue>
+        </error-handler>
+    </flow>
+    <flow name="get:\facultad:practica-config">
+        <set-variable value="#[attributes.queryParams.idFacultad]" doc:name="idFacultad" doc:id="2d9830ea-3caa-4f55-88ae-28cbe67caa91" variableName="idFacultad" />
+        <flow-ref doc:name="get /facultad" doc:id="14454946-53a3-4148-9d90-b614ba35b7b7" name="get_facultad" />
+		<ee:transform doc:name="Transform Message" doc:id="41060fe5-fa4f-4819-899e-3d2894c36c11" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	hakuna: "Matata Timon, Hakuna Matata"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="7eaa27a9-2f31-4ede-9c5e-2b5de41c34db" >
+			</on-error-continue>
+		</error-handler>
+    </flow>
+    <flow name="get:\usuario:practica-config">
+        <set-variable value="#[attributes.queryParams.ci]" doc:name="ci" doc:id="8f45ed1c-0b37-4b4a-b95b-e22cd4cd313f" variableName="ci" />
+        <flow-ref doc:name="GET /usuario" doc:id="ea839d71-9ad4-4556-b839-4da7e10f85e1" name="get_usuario" />
+        <logger level="INFO" message="get:\usuario:practica-config" />
+    </flow>
+    <flow name="post:\curso:application\json:practica-config">
+        <set-variable value="#[attributes.queryParams.idFacultad]" doc:name="idFacultad" doc:id="244cd137-6b25-4d66-8cbd-a5f876e91595" variableName="idFacultad" />
+        <flow-ref doc:name="POST curso" doc:id="31349ab2-4ab0-4c38-9533-03e88054177d" name="post_curso" />
+        <logger level="INFO" message="post:\curso:application\json:practica-config" />
+    </flow>
+    <flow name="post:\facultad:application\json:practica-config">
+        <set-variable value="#[attributes.queryParams.idFacultad]" doc:name="idFacultad" doc:id="305675a1-55fd-4501-bfef-0d8b0db4591b" variableName="idFacultad" />
+        <flow-ref doc:name="POST facultad" doc:id="438ecdb3-ae7c-4f8d-8355-bff9cdec4ee3" name="post_facultad" />
+        <logger level="INFO" message="post:\facultad:application\json:practica-config" />
+    </flow>
+    <flow name="post:\usuario:application\json:practica-config">
+        <set-variable value="#[payload]" doc:name="Set Variable" doc:id="04347743-d5f5-47f5-baa8-f012d32b0ad5" variableName="requestBody" />
+        <flow-ref doc:name="POST /usuario" doc:id="6909c04d-0a7c-4323-b097-e664ff7bf6ad" name="post_usuario" />
+        <logger level="INFO" message="post:\usuario:application\json:practica-config" />
+    </flow>
+    <flow name="post:\usuario\(ci):practica-config">
+        <ee:transform>
+            <ee:variables>
+                <ee:set-variable variableName="ci">attributes.uriParams.'ci'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <logger level="INFO" message="post:\usuario\(ci):practica-config" />
+    </flow>
+    <flow name="get:\usuario\(ci):practica-config">
+        <ee:transform>
+            <ee:variables>
+                <ee:set-variable variableName="ci">attributes.uriParams.'ci'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <logger level="INFO" message="get:\usuario\(ci):practica-config" />
+    </flow>
+    <flow name="post:\sync\all:practica-config">
+        <flow-ref doc:name="Sync all" doc:id="75fd710e-72f4-4046-a490-dda999d7671f" name="sync_all" />
+        <logger level="INFO" message="post:\sync\all:practica-config" />
+    </flow>
+    <flow name="post:\sync\courses:practica-config">
+        <flow-ref doc:name="sync_curso" doc:id="4067132a-9485-4760-8b50-da90171ee617" name="sync_curso" />
+        <logger level="INFO" message="post:\sync\courses:practica-config" />
+    </flow>
+    <flow name="post:\sync\inscriptions:practica-config">
+        <flow-ref doc:name="Flow Reference" doc:id="08763e04-9e80-4c1f-99a2-1aac75b758e2" name="sync_inscripciones" />
+        <logger level="INFO" message="post:\sync\inscriptions:practica-config" />
+    </flow>
+    <flow name="post:\sync\universities:practica-config">
+        <flow-ref doc:name="sync_facultad" doc:id="6dbfa305-b877-4bd9-8a84-b6e93b1995cd" name="sync_facultad" />
+        <logger level="INFO" message="post:\sync\universities:practica-config" />
+    </flow>
+    <flow name="post:\sync\users:practica-config">
+        <flow-ref doc:name="sync_usuario" doc:id="cf55767a-0a37-49eb-b927-8f617e151f11" name="sync_usuario" />
+        <logger level="INFO" message="post:\sync\users:practica-config" />
+    </flow>
+    <flow name="get:\database\facultad:practica-config">
+        <logger level="INFO" message="get:\database\facultad:practica-config" />
+    </flow>
+    <flow name="get:\db\cursos:practica-config">
+        <logger level="INFO" message="get:\db\cursos:practica-config" />
+    </flow>
+    <flow name="get:\db\facultades:practica-config">
+        <logger level="INFO" message="get:\db\facultades:practica-config" />
+    </flow>
+    <flow name="get:\db\inscripciones:practica-config">
+        <logger level="INFO" message="get:\db\inscripciones:practica-config" />
+    </flow>
+    <flow name="get:\db\usuarios:practica-config">
+        <logger level="INFO" message="get:\db\usuarios:practica-config" />
+    </flow>
+    <flow name="delete:\db\assessment:practica-config">
+        <logger level="INFO" message="delete:\db\assessment:practica-config" />
+    </flow>
+    <flow name="delete:\db\qualification:practica-config">
+        <logger level="INFO" message="delete:\db\qualification:practica-config" />
+    </flow>
+    <flow name="get:\db\assessment:practica-config">
+        <logger level="INFO" message="get:\db\assessment:practica-config" />
+    </flow>
+    <flow name="get:\db\qualification:practica-config">
+        <logger level="INFO" message="get:\db\qualification:practica-config" />
+    </flow>
+    <flow name="post:\db\assessment:application\json:practica-config">
+        <logger level="INFO" message="#[payload]" />
+        <flow-ref doc:name="insert assessment" doc:id="ff794c44-da96-4216-b9ac-628a24392bb4" name="insert_assessment" />
+    </flow>
+    <flow name="post:\db\qualification:application\json:practica-config">
+        <logger level="INFO" message="#[payload]" />
+        <flow-ref doc:name="insert qualification" doc:id="3eb97212-1644-4bdf-94c2-eda7bcc878ef" name="insert_qualification" />
+    </flow>
+    <flow name="get:\mapObject:practica-config">
+        <flow-ref doc:name="Copy_of_Flow Reference" doc:id="1a9dc637-f5e0-4186-b268-68aedbd038e7" name="implementationFlow10" />
+		<logger level="INFO" message="get:\mapObject:practica-config" />
+    </flow>
+    <flow name="get:\example\papaya:practica-config">
+        <flow-ref doc:name="Flow Reference" doc:id="7f6e9bcb-322b-493d-97ab-fc12c60ed80e" name="implementationFlow6"/>
+		<logger level="INFO" message="get:\example\papaya:practica-config" />
+    </flow>
+</mule>

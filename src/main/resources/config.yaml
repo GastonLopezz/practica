@@ -1,0 +1,22 @@
+api:
+  url: "localhost"
+  port: "55496"
+  basepath: "/api"
+db:
+  name: "pruebadb"
+  name2: "sakila"
+  host: "localhost"
+  user: "root"
+  pass: "1234"
+  port: "3306"
+dir:
+  name: 'C:\Users\gasto\OneDrive\Escritorio\PruebaFiles'
+sf:
+  user: "gaston.lopez24299@gmail.com"
+  token: "zL9MBBM9Iqa8pxc3CTePe66qN"
+anypoint:
+  username: "gastonLopez"
+  password: "Danubio3122098"
+  environment: "sandbox"
+mule:
+  version:"4.3.0"

@@ -1,0 +1,97 @@
+#%RAML 1.0
+title: Practica
+
+types:
+  Facultad: !include Dts/facultadDt.raml
+  Curso: !include /Dts/cursoDt.raml
+  Usuario: !include /Dts/usuarioDt.raml
+
+/facultad:
+  get:
+    queryParameters:
+      idFacultad:
+        required: true
+        type: string
+  post:
+    body:
+      application/json:
+        examples: 
+          input: Facultad
+  delete:
+    queryParameters:
+      id:
+        required: true
+        type: string
+  put:
+    body:
+      application/json:
+        examples:
+          input: Facultad
+/curso:
+  get:
+    queryParameters:
+      idFacultad:
+        required: true
+        type: string
+      idCurso:
+        required: true
+        type: string
+  post:
+    queryParameters:
+      idFacultad:
+        required: true
+        type: string
+    body:
+      application/json:
+        examples:
+          input: Curso
+  delete:
+    queryParameters:
+      idFacultad:
+        required: true
+        type: string
+      idCurso:
+        required: true
+        type: string
+  put:
+    queryParameters:
+      idFacultad:
+        required: true
+        type: string
+    body:
+      application/json:
+        examples:
+          input: Curso
+/usuario:
+  get:
+    queryParameters:
+      ci:
+        required: true
+        type: integer
+  post:
+    body:
+      application/json:
+        examples:
+          input: Usuario
+  delete:
+    queryParameters:
+      ci:
+        required: true
+        type: integer
+  put:
+    body:
+      application/json:
+        examples:
+          input: Usuario
+  /{ci}:
+    get:
+    post:
+      queryParameters:
+        idFacultad:
+          required: true
+          type: string
+    delete:
+      queryParameters:
+        idFacultad:
+          required: true
+          type: string    
