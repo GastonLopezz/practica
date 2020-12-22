@@ -30,6 +30,24 @@
 				<version>${mule.maven.plugin.version}</version>
 				<extensions>true</extensions>
 				<configuration>
+		            <deploymentType>cloudhub</deploymentType>
+		            <muleVersion>${mule.version}</muleVersion>
+		            <username>${anypoint.username}</username>
+		            <password>${anypoint.password}</password>
+		            <applicationName>practica</applicationName>
+		            <environment>${anypoint.environment}</environment>
+		            <properties>
+		                <key>value</key>
+		            </properties>
+		           	<executions>
+		               <execution>
+		                  <id>deploy</id>
+		                  <phase>deploy</phase>
+		                  <goals>
+		                     <goal>deploy</goal>
+		                  </goals>
+		               </execution>
+		            </executions>
 				<sharedLibraries>
                         <sharedLibrary>
                             <groupId>com.microsoft.sqlserver</groupId>
@@ -58,33 +76,6 @@
                     </sharedLibraries>
                 </configuration>
 			</plugin>
-			<!--<plugin>
-            <groupId>org.mule.tools.maven</groupId>
-            <artifactId>mule-maven-plugin</artifactId>
-            <version>2.3.2</version>
-            <configuration>
-		        <cloudHubDeployment>
-		            <uri>https://anypoint.mulesoft.com</uri>
-		            <muleVersion>${mule.version}</muleVersion>
-		            <username>${anypoint.username}</username>
-		            <password>${anypoint.password}</password>
-		            <applicationName>mulesoft-jenkins-ci-cd</applicationName>
-		            <environment>${anypoint.environment}</environment>
-		            <properties>
-		                <key>value</key>
-		            </properties>
-		        </cloudHubDeployment>
-		    </configuration>
-           	<executions>
-               <execution>
-                  <id>deploy</id>
-                  <phase>deploy</phase>
-                  <goals>
-                     <goal>deploy</goal>
-                  </goals>
-               </execution>
-            </executions>
-         </plugin>-->
 		</plugins>
 	</build>
 
