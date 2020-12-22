@@ -899,7 +899,7 @@ payload]]></ee:set-payload>
 				<logger level="INFO" doc:name="Logger" doc:id="67c5893a-19d3-485b-9968-8a8f3e1e76cd" message="#[payload]"/>
 			</when>
 			<otherwise >
-				<logger level="INFO" doc:name="No records" doc:id="16d1ff95-6fd3-4896-b0fa-b202525ad660" message='#["NO NEW RECORDS"]'/>
+				<logger level="INFO" doc:name="No records" doc:id="16d1ff95-6fd3-4896-b0fa-b202525ad660" message='#["NO NEW RECORDS MAN, WASSUP BROH"]'/>
 			</otherwise>
 		</choice>
 	</flow>
