@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<flow name="splunkFlow" doc:id="5788d390-7214-4453-81c0-d66016a4e28e" >
+		<http:listener doc:name="Listener" doc:id="93541794-9d22-4345-ac7d-6abdef1f96f2" config-ref="practica-httpListenerConfig" path="/batata"/>
+		<set-payload value="#[25+25]" doc:name="Set Payload" doc:id="09328d25-0c0a-4232-a73f-6dd866cc517d" />
+		<logger level="INFO" doc:name="Logger" doc:id="8ae96cf4-62d7-4800-bfa7-e00ab2e6bae8" message="example splung:  #[payload]"/>
+	</flow>
+</mule>

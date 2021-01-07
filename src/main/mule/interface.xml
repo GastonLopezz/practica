@@ -160,16 +160,6 @@ output application/json
     <flow name="get:\facultad:practica-config">
         <set-variable value="#[attributes.queryParams.idFacultad]" doc:name="idFacultad" doc:id="2d9830ea-3caa-4f55-88ae-28cbe67caa91" variableName="idFacultad" />
         <flow-ref doc:name="get /facultad" doc:id="14454946-53a3-4148-9d90-b614ba35b7b7" name="get_facultad" />
-		<ee:transform doc:name="Transform Message" doc:id="41060fe5-fa4f-4819-899e-3d2894c36c11" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-{
-	hakuna: "Matata Timon, Hakuna Matata"
-}]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
 		<error-handler >
 			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="7eaa27a9-2f31-4ede-9c5e-2b5de41c34db" >
 			</on-error-continue>

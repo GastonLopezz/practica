@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:vm="http://www.mulesoft.org/schema/mule/vm" xmlns:cluster="http://www.mulesoft.org/schema/mule/ee/cluster"
-	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
-	xmlns:jms="http://www.mulesoft.org/schema/mule/jms" xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+<mule xmlns:amqp="http://www.mulesoft.org/schema/mule/amqp" xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
+	xmlns:cluster="http://www.mulesoft.org/schema/mule/ee/cluster"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:jms="http://www.mulesoft.org/schema/mule/jms" xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
 http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
@@ -10,7 +10,8 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
 http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
 http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
-http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd">
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd
+http://www.mulesoft.org/schema/mule/amqp http://www.mulesoft.org/schema/mule/amqp/current/mule-amqp.xsd">
 	
 	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="2e6df9ab-bd6e-40be-afb6-ce8de8bc84d9" basePath="${api.basepath}" >
 		<http:request-connection host="${api.url}" port="${api.port}" />
@@ -44,6 +45,9 @@ http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/cu
 			<vm:queue queueName="example" />
 		</vm:queues>
 	</vm:config>
+	<amqp:config name="AMQP_Config" doc:name="AMQP Config" doc:id="02a05422-354d-4527-a9ec-3b55c1cc1979" >
+		<amqp:connection host="localhost" port="5672" username="gas" password="1234" />
+	</amqp:config>
 	<error-handler name="globalError_Handler" doc:id="6ab57d87-3a03-4e08-9be8-80a4757b25e5" >
 		<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="8628c540-989b-4a46-9759-7277073d6b1c" type="ANY">
 			<ee:transform doc:name="Transform Message" doc:id="cf1e7bb1-25e9-4e0e-a03f-e38418a2b6be" >

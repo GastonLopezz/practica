@@ -183,6 +183,12 @@
             <classifier>raml</classifier>
             <type>zip</type>
         </dependency>
+    	<dependency>
+            <groupId>com.mulesoft.connectors</groupId>
+            <artifactId>mule-amqp-connector</artifactId>
+            <version>1.7.0</version>
+            <classifier>mule-plugin</classifier>
+        </dependency>
     </dependencies>
 
 	<distributionManagement>

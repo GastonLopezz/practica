@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking"
-	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
-	xmlns:jms="http://www.mulesoft.org/schema/mule/jms" xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:vm="http://www.mulesoft.org/schema/mule/vm" xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+<mule xmlns:amqp="http://www.mulesoft.org/schema/mule/amqp" xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:jms="http://www.mulesoft.org/schema/mule/jms" xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:vm="http://www.mulesoft.org/schema/mule/vm" xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
@@ -13,7 +13,8 @@ http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mu
 http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
 http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
 http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
-http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/amqp http://www.mulesoft.org/schema/mule/amqp/current/mule-amqp.xsd">
 	<flow name="get_facultad" doc:id="103d6b57-e072-4317-8339-75bdaf56f183" >
 		<try doc:name="Try" doc:id="863f7273-69ba-470d-b197-58c33f63d155" >
 			<http:request method="GET" doc:name="GET facultad" doc:id="d06bc820-3d45-4282-bb0c-49c5aa59a931" config-ref="HTTP_Request_configuration" path="/facultad">
@@ -23,13 +24,15 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/json
-var facultad = vars.university filter($.nombre==vars.idFacultad)
+import * from dw::core::Strings
+var filtro = vars.university filter($.nombre==vars.idFacultad)
+var facultad = filtro[0]
 ---
-if(facultad[0] != null)
+if(facultad != null)
 	{ 
-		nombre: upper(facultad[0].nombre as String),
-		url: facultad[0].url,
-		direccion: facultad[0].direccion
+		nombre: upper(facultad.nombre as String),
+		url: facultad.url,
+		direccion: facultad.direccion
 	}
 else
 	{}]]></ee:set-payload>
@@ -158,6 +161,7 @@ else
 	{message: "No entities"}]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="a8d7c923-b54e-4144-a9d6-0be12f0e6f17" message="#[payload]"/>
 		<error-handler >
 			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="a65990a3-146d-42bf-b683-ddf4799c1c97">
 				<set-payload value="Informacion is blank" doc:name="Set Payload" doc:id="8ec30196-3076-4298-a8a1-17cfe8a85958" />
@@ -509,10 +513,7 @@ output application/java
 				<fixed-frequency frequency="20" timeUnit="SECONDS"/>
 			</scheduling-strategy>
 		</db:listener>
-		<db:select doc:name="Select" doc:id="9c89be48-4720-4412-954b-2a74898ef0ec" config-ref="Database_Config">
-			<db:sql ><![CDATA[SELECT * FROM sakila.actor;]]></db:sql>
-		</db:select>
-		<ee:transform doc:name="Transform Message" doc:id="49722bfe-c2ec-44bf-b416-5fc09cb08836" >
+		<ee:transform doc:name="Transform Message" doc:id="b854b0c5-7efe-4d73-bcae-81a9b417ca3e" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/json
@@ -525,6 +526,7 @@ payload]]></ee:set-payload>
 				<jms:properties ><![CDATA[#[{"publisher":"actor"}]]]></jms:properties>
 			</jms:message>
 		</jms:publish>
+		<amqp:publish doc:name="Publish" doc:id="4abd1afe-cb89-4b68-b405-483f47e57137" config-ref="AMQP_Config" exchangeName="amq.direct" deliveryMode="PERSISTENT"/>
 	</flow>
 	<flow name="receiveQUEUEandWriteCSV" doc:id="6bbcb399-c5d0-4f8b-9fb4-aff09a8803a6" >
 		<jms:listener doc:name="On New Message" doc:id="c2d1fd46-2f40-4392-b071-deb243039199" config-ref="JMS_Config" destination="sakilaQ">
@@ -789,10 +791,25 @@ output application/json
 var papaya = payload filter (value,index) -> (value.example contains ("Tw"))
 ---
 {
-	ex: papaya.example.*number[?($ == 2.4)]
+	ex: papaya
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
+		<amqp:publish doc:name="Publish" doc:id="9452dbee-addc-4db3-a23a-0cbcfffd8d12" config-ref="AMQP_Config" exchangeName="amq.direct" deliveryMode="PERSISTENT"/>
+	</flow>
+	<flow name="implementationFlow12" doc:id="dc5bc70f-4cad-4730-85ab-71f2a90d36f6" >
+		<amqp:listener doc:name="Listener" doc:id="0c16a929-3a66-41d5-bf6b-398f761587bc" config-ref="AMQP_Config" queueName="prueba" ackMode="AUTO"/>
+		<ee:transform doc:name="Transform Message" doc:id="6de53d1a-5fc0-47c5-ac35-0180a57e6c7d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/csv
+header = false
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<file:write doc:name="Write" doc:id="627a20ed-30d8-4e2a-8e0e-2b71b04e3afa" path="${dir.name}/PruebaRabbitMQ.csv" config-ref="File_Config" mode="APPEND">
+		</file:write>
 	</flow>
 	<flow name="implementationFlow6" doc:id="2594321e-b9d1-40a3-994d-9b6b393552a7" >
 		<set-payload value='#["Hello"]' doc:name="Set Payload" doc:id="9c3b48b8-b294-4002-94b8-6ef079743de5" />
