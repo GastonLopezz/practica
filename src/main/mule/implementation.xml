@@ -14,7 +14,7 @@ http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/
 http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
 http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
 http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
-http://www.mulesoft.org/schema/mule/amqp http://www.mulesoft.org/schema/mule/amqp/current/mule-amqp.xsd">
+http://www.mulesoft.org/schema/mule/amqp http://www.mulesoft.org/schema/mule/amqp/current/mule-amqp.xsd">adassadsdfasdf
 	<flow name="get_facultad" doc:id="103d6b57-e072-4317-8339-75bdaf56f183" >
 		<try doc:name="Try" doc:id="863f7273-69ba-470d-b197-58c33f63d155" >
 			<http:request method="GET" doc:name="GET facultad" doc:id="d06bc820-3d45-4282-bb0c-49c5aa59a931" config-ref="HTTP_Request_configuration" path="/facultad">
